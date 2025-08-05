@@ -47,6 +47,7 @@ if st.button("Get Answer"):
                 )
                 reply = response.choices[0].message.content.strip()
                 st.success("Here is my answer: ")
+                st.markdown(f"{reply}")
                 tts = gTTS(text=reply)
                 filename = f"{uuid.uuid4().hex}.mp3"
                 tts.save(filename)
