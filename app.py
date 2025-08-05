@@ -4,7 +4,7 @@ from gtts import gTTS
 import os 
 import uuid
 from openai import OpenAI 
-from io import BytesIO
+import base64
 api_key = st.secrets["openai"]["api_key"]
 client = OpenAI(api_key=api_key)
 prompt = """
@@ -47,13 +47,24 @@ if st.button("Get Answer"):
                 )
                 reply = response.choices[0].message.content.strip()
                 st.success("Here is my answer: ")
-                st.write(reply)
                 tts = gTTS(text=reply)
-                audio_buffer = BytesIO()
-                tts.write_to_fp(audio_buffer)
-                audio_buffer.seek(0)
+                filename = f"{uuid.uuid4().hex}.mp3"
+                tts.save(filename)
 
-                st.audio(audio_buffer, format="audio/mp3")
+                # Encode MP3 to base64
+                with open(filename, "rb") as f:
+                    mp3_data = f.read()
+                    b64 = base64.b64encode(mp3_data).decode()
+
+                # Display mobile-friendly HTML audio player
+                audio_html = f"""
+                <audio controls autoplay>
+                    <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
+                    Your browser does not support the audio tag.
+                </audio>
+                """
+                st.markdown(audio_html, unsafe_allow_html=True)
         except Exception as e:
             st.error(f"Something went wrong: {e}")
-        
+        finally:
+            os.remove(filename)
