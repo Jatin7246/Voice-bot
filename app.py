@@ -4,6 +4,7 @@ from gtts import gTTS
 import os 
 import uuid
 from openai import OpenAI 
+from io import BytesIO
 api_key = st.secrets["openai"]["api_key"]
 client = OpenAI(api_key=api_key)
 prompt = """
@@ -48,15 +49,11 @@ if st.button("Get Answer"):
                 st.success("Here is my answer: ")
                 st.write(reply)
                 tts = gTTS(text=reply)
-                audio_file = f"response_{uuid.uuid4().hex}.mp3"
-                tts.save(audio_file)
+                audio_buffer = BytesIO()
+                tts.write_to_fp(audio_buffer)
+                audio_buffer.seek(0)
 
-                # Play audio in Streamlit
-                audio_bytes = open(audio_file, "rb").read()
-                st.audio(audio_bytes, format="audio/mp3")
-
+                st.audio(audio_buffer, format="audio/mp3")
         except Exception as e:
             st.error(f"Something went wrong: {e}")
-        finally:
-            if os.path.exists(audio_file):
-                os.remove(audio_file)
+        
